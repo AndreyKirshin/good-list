@@ -22,7 +22,6 @@ export function GoodsForm({ editingGood, onSubmit, onCancel }: GoodsFormProps) {
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors },
   } = useForm<GoodFormData>({
     resolver: zodResolver(goodSchema),

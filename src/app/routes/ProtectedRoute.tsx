@@ -1,22 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
+import { getStoredSession } from '../../features/auth'
 
 interface ProtectedRouteProps {
   children: ReactNode
-}
-
-const SESSION_KEY = 'auth_session'
-
-interface SessionData {
-  accessToken: string
-  user: {
-    id: number
-    username: string
-    email: string
-    firstName: string
-    lastName: string
-  }
-  isAuthenticated: boolean
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
@@ -24,21 +11,13 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   useEffect(() => {
     const checkAuth = () => {
-      const sessionData = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY)
+      const session = getStoredSession()
       
-      if (sessionData) {
-        try {
-          const session: SessionData = JSON.parse(sessionData)
-          if (session.isAuthenticated && session.accessToken) {
-            setIsAuthenticated(true)
-            return
-          }
-        } catch {
-          sessionStorage.removeItem(SESSION_KEY)
-          localStorage.removeItem(SESSION_KEY)
-        }
+      if (session && session.isAuthenticated && session.accessToken) {
+        setIsAuthenticated(true)
+      } else {
+        setIsAuthenticated(false)
       }
-      setIsAuthenticated(false)
     }
 
     checkAuth()
