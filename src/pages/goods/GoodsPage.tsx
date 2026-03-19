@@ -12,7 +12,6 @@ import {
   Text,
   Badge,
   Field,
-  createToaster,
   Spinner,
   Checkbox,
   IconButton,
@@ -32,10 +31,7 @@ import {
   type RowSelectionState,
   type SortingState,
 } from '@tanstack/react-table'
-
-const toaster = createToaster({
-  placement: 'top-end',
-})
+import toast, { Toaster } from 'react-hot-toast'
 
 interface Good {
   id: number
@@ -81,6 +77,7 @@ export function GoodsPage() {
   const [page, setPage] = useState(0)
   const [limit] = useState(20)
   const [total, setTotal] = useState(0)
+  const [editingGood, setEditingGood] = useState<Good | null>(null)
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -92,6 +89,20 @@ export function GoodsPage() {
   } = useForm<GoodFormData>({
     resolver: zodResolver(goodSchema),
   })
+
+  // Заполнение формы при редактировании
+  useEffect(() => {
+    if (editingGood) {
+      reset({
+        title: editingGood.title,
+        price: editingGood.price,
+        brand: editingGood.brand,
+        sku: editingGood.sku || '',
+      })
+    } else {
+      reset()
+    }
+  }, [editingGood, reset])
 
   // Загрузка данных с API
   const fetchGoods = useCallback(async (
@@ -420,7 +431,7 @@ export function GoodsPage() {
     columnHelper.display({
       id: 'actions',
       header: () => null,
-      cell: () => (
+      cell: ({ row }) => (
         <Menu.Root>
           <Menu.Trigger asChild>
             <IconButton
@@ -436,7 +447,15 @@ export function GoodsPage() {
           <Portal>
             <Menu.Positioner>
               <Menu.Content>
-                <Menu.Item value="edit">Редактировать</Menu.Item>
+                <Menu.Item
+                  value="edit"
+                  onClick={() => {
+                    setEditingGood(row.original)
+                    setIsModalOpen(true)
+                  }}
+                >
+                  Редактировать
+                </Menu.Item>
                 <Menu.Item value="delete" color="red">Удалить</Menu.Item>
               </Menu.Content>
             </Menu.Positioner>
@@ -444,7 +463,7 @@ export function GoodsPage() {
         </Menu.Root>
       ),
     }),
-  ], [columnHelper, goods, rowSelection])
+  ], [columnHelper, goods, rowSelection, setEditingGood])
 
   const table = useReactTable({
     data: filteredAndSortedGoods,
@@ -457,21 +476,26 @@ export function GoodsPage() {
   })
 
   const onSubmit = (data: GoodFormData) => {
-    const newGood: Good = {
-      id: Date.now(),
-      ...data,
-      category: 'Custom',
-      rating: 5,
+    if (editingGood) {
+      // Редактирование товара
+      const updatedGoods = goods.map((good) =>
+        good.id === editingGood.id ? { ...good, ...data } : good
+      )
+      setGoods(updatedGoods)
+      toast.success(`Товар "${data.title}" обновлён - ${data.price} ₽`)
+      setEditingGood(null)
+    } else {
+      // Добавление товара
+      const newGood: Good = {
+        id: Date.now(),
+        ...data,
+        category: 'Custom',
+        rating: 5,
+      }
+      const updatedGoods = [...goods, newGood]
+      setGoods(updatedGoods)
+      toast.success(`Товар "${data.title}" добавлен - ${data.price} ₽`)
     }
-    const updatedGoods = [...goods, newGood]
-    setGoods(updatedGoods)
-    
-    toaster.create({
-      title: 'Товар добавлен',
-      description: `${data.title} - ${data.price} ₽`,
-      type: 'success',
-      duration: 3000,
-    })
     
     reset()
     setIsModalOpen(false)
@@ -500,14 +524,16 @@ export function GoodsPage() {
           maxW="400px"
         />
         
-        <Button colorPalette="green" onClick={() => setIsModalOpen(true)}>
+        <Button colorPalette="green" onClick={() => {setIsModalOpen(true)}}>
           Добавить товар
         </Button>
       </HStack>
 
       {isModalOpen && (
         <Box bg="white" p={6} borderRadius="lg" boxShadow="md" mb={6}>
-          <Heading size="md" mb={4}>Добавить новый товар</Heading>
+          <Heading size="md" mb={4}>
+            {editingGood ? 'Редактировать товар' : 'Добавить новый товар'}
+          </Heading>
           <form onSubmit={handleSubmit(onSubmit)}>
             <VStack gap={4}>
               <Field.Root invalid={!!errors.title}>
@@ -538,8 +564,18 @@ export function GoodsPage() {
               </Field.Root>
               
               <HStack>
-                <Button type="submit" colorPalette="blue">Добавить</Button>
-                <Button variant="outline" onClick={() => setIsModalOpen(false)}>Отмена</Button>
+                <Button type="submit" colorPalette="blue">
+                  {editingGood ? 'Сохранить' : 'Добавить'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsModalOpen(false)
+                    setEditingGood(null)
+                  }}
+                >
+                  Отмена
+                </Button>
               </HStack>
             </VStack>
           </form>
@@ -676,6 +712,7 @@ export function GoodsPage() {
           Показано {goods.length} из {total} товаров • Страница {page + 1} из {totalPages}
         </Text>
       )}
+      <Toaster position="top-right" />
     </Container>
   )
 }
