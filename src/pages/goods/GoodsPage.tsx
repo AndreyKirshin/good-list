@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import {
   Box,
@@ -71,14 +71,18 @@ export function GoodsPage() {
   const [goods, setGoods] = useState<Good[]>([])
   const [search, setSearch] = useState('')
   const [searchInput, setSearchInput] = useState('')
-  const [sortBy, setSortBy] = useState<SortField>('title')
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
+  const [sortBy, setSortBy] = useState<SortField | undefined>(undefined)
+  const [sortOrder, setSortOrder] = useState<SortOrder | undefined>(undefined)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [sorting, setSorting] = useState<SortingState>([])
+  const [page, setPage] = useState(0)
+  const [limit] = useState(20)
+  const [total, setTotal] = useState(0)
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const {
     register,
@@ -90,15 +94,28 @@ export function GoodsPage() {
   })
 
   // Загрузка данных с API
-  const fetchGoods = useCallback(async (query?: string, sortField?: SortField, sortOrderVal?: SortOrder) => {
+  const fetchGoods = useCallback(async (
+    query?: string,
+    sortField?: SortField,
+    sortOrderVal?: SortOrder,
+    pageNum?: number,
+    limitVal?: number
+  ) => {
     setIsLoading(true)
     setError(null)
     try {
+      const currentPage = pageNum ?? page
+      const currentLimit = limitVal ?? limit
+      const skip = currentPage * currentLimit
+      
       let url = query
         ? `https://dummyjson.com/products/search?q=${encodeURIComponent(query)}`
         : 'https://dummyjson.com/products'
       
-      const params: Record<string, string | number> = { limit: 100 }
+      const params: Record<string, string | number> = {
+        limit: currentLimit,
+        skip: skip
+      }
       
       // Добавляем параметры сортировки для API
       if (sortField && sortOrderVal) {
@@ -118,18 +135,56 @@ export function GoodsPage() {
       }))
       
       setGoods(productsWithSku)
+      setTotal(response.data.total)
     } catch (err) {
       console.error('Error fetching goods:', err)
       setError('Не удалось загрузить товары. Попробуйте позже.')
     } finally {
       setIsLoading(false)
     }
+  }, [page, limit])
+
+  // Чтение параметров из URL и загрузка данных при монтировании
+  useEffect(() => {
+    const pageParam = searchParams.get('page')
+    const sortByParam = searchParams.get('sortBy') as SortField | null
+    const orderParam = searchParams.get('order') as SortOrder | null
+    
+    let initialPage = 0
+    if (pageParam) {
+      const pageNum = parseInt(pageParam, 10)
+      if (!isNaN(pageNum) && pageNum >= 0) {
+        initialPage = pageNum
+        setPage(pageNum)
+      }
+    }
+    
+    if (sortByParam) {
+      setSortBy(sortByParam)
+    }
+    if (orderParam) {
+      setSortOrder(orderParam)
+    }
+    
+    // Загружаем данные с учётом параметров из URL
+    fetchGoods(search, sortByParam || sortBy, orderParam || sortOrder, initialPage, limit)
   }, [])
 
-  // Загрузка данных при монтировании
+  // Обновление URL при изменении параметров
   useEffect(() => {
-    fetchGoods(search, sortBy, sortOrder)
-  }, [fetchGoods, sortBy, sortOrder])
+    const params = new URLSearchParams()
+    if (page > 0) params.set('page', page.toString())
+    if (sortBy) params.set('sortBy', sortBy)
+    if (sortOrder) params.set('order', sortOrder)
+    setSearchParams(params, { replace: true })
+  }, [page, sortBy, sortOrder, setSearchParams])
+
+  // Загрузка данных при изменении page (после начальной загрузки)
+  useEffect(() => {
+    // Пропускаем первый вызов, так как данные уже загружены в initial effect
+    fetchGoods(search, sortBy, sortOrder, page, limit)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, search, sortBy, sortOrder, limit])
 
   // Отслеживание изменений сортировки из react-table и запрос к API
   useEffect(() => {
@@ -141,29 +196,64 @@ export function GoodsPage() {
       // Обновляем состояние и загружаем данные с новой сортировкой
       setSortBy(field)
       setSortOrder(order)
-      fetchGoods(search, field, order)
+      // Сбрасываем страницу при сортировке
+      setPage(0)
+      fetchGoods(search, field, order, 0, limit)
     }
   }, [sorting])
 
-  // Сохранение состояния сортировки в localStorage
-  useEffect(() => {
-    const savedSortBy = localStorage.getItem('sortBy') as SortField | null
-    const savedSortOrder = localStorage.getItem('sortOrder') as SortOrder | null
-    
-    if (savedSortBy) setSortBy(savedSortBy)
-    if (savedSortOrder) setSortOrder(savedSortOrder)
-  }, [])
+  // Вычисляем общее количество страниц
+  const totalPages = Math.ceil(total / limit)
 
-  useEffect(() => {
-    localStorage.setItem('sortBy', sortBy)
-    localStorage.setItem('sortOrder', sortOrder)
-  }, [sortBy, sortOrder])
+  // Генерация массива страниц для отображения
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = []
+    const maxVisible = 5
+    
+    if (totalPages <= maxVisible) {
+      for (let i = 0; i < totalPages; i++) {
+        pages.push(i)
+      }
+    } else {
+      // Всегда показываем первую страницу
+      pages.push(0)
+      
+      if (page > 2) {
+        pages.push('...')
+      }
+      
+      // Показываем страницы вокруг текущей
+      const start = Math.max(1, page - 1)
+      const end = Math.min(totalPages - 2, page + 1)
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i)
+      }
+      
+      if (page < totalPages - 3) {
+        pages.push('...')
+      }
+      
+      // Всегда показываем последнюю страницу
+      pages.push(totalPages - 1)
+    }
+    
+    return pages
+  }
+
+  // Обработчик смены страницы
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 0 && newPage < totalPages) {
+      setPage(newPage)
+    }
+  }
 
   // Обработчик поиска с задержкой
   const handleSearch = useCallback(() => {
     setSearch(searchInput)
-    fetchGoods(searchInput, sortBy, sortOrder)
-  }, [searchInput, fetchGoods, sortBy, sortOrder])
+    setPage(0) // Сбрасываем страницу при новом поиске
+    fetchGoods(searchInput, sortBy, sortOrder, 0, limit)
+  }, [searchInput, fetchGoods, sortBy, sortOrder, limit])
 
   // Обработчик изменения поискового запроса с задержкой
   useEffect(() => {
@@ -466,7 +556,7 @@ export function GoodsPage() {
       {error && (
         <Box bg="red.50" p={4} borderRadius="md" mb={6}>
           <Text color="red.600">{error}</Text>
-          <Button mt={2} size="sm" onClick={() => fetchGoods(search, sortBy, sortOrder)}>
+          <Button mt={2} size="sm" onClick={() => fetchGoods(search, sortBy, sortOrder, page, limit)}>
             Повторить
           </Button>
         </Box>
@@ -529,6 +619,61 @@ export function GoodsPage() {
       {!isLoading && !error && filteredAndSortedGoods.length === 0 && (
         <Text textAlign="center" color="gray.500" mt={8}>
           Товары не найдены
+        </Text>
+      )}
+
+      {/* Пагинация */}
+      {!isLoading && !error && totalPages > 1 && (
+        <HStack justify="center" mt={6} gap={2}>
+          {/* Кнопка назад */}
+          <IconButton
+            aria-label="Предыдущая страница"
+            size="sm"
+            variant="outline"
+            onClick={() => handlePageChange(page - 1)}
+            disabled={page === 0}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0Z" />
+            </svg>
+          </IconButton>
+
+          {/* Кнопки страниц */}
+          {getPageNumbers().map((pageNum, idx) => (
+            typeof pageNum === 'number' ? (
+              <Button
+                key={idx}
+                size="sm"
+                variant={pageNum === page ? 'solid' : 'outline'}
+                colorPalette={pageNum === page ? 'blue' : 'gray'}
+                onClick={() => handlePageChange(pageNum)}
+              >
+                {pageNum + 1}
+              </Button>
+            ) : (
+              <Text key={idx} px={2}>...</Text>
+            )
+          ))}
+
+          {/* Кнопка вперёд */}
+          <IconButton
+            aria-label="Следующая страница"
+            size="sm"
+            variant="outline"
+            onClick={() => handlePageChange(page + 1)}
+            disabled={page >= totalPages - 1}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708Z" />
+            </svg>
+          </IconButton>
+        </HStack>
+      )}
+
+      {/* Информация о количестве */}
+      {!isLoading && !error && total > 0 && (
+        <Text textAlign="center" color="gray.500" mt={4} fontSize="sm">
+          Показано {goods.length} из {total} товаров • Страница {page + 1} из {totalPages}
         </Text>
       )}
     </Container>
