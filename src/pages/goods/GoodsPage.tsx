@@ -9,16 +9,29 @@ import {
   Input,
   HStack,
   VStack,
-  SimpleGrid,
   Text,
   Badge,
   Field,
   createToaster,
   Spinner,
+  Checkbox,
+  IconButton,
+  Image,
+  Menu,
+  Portal,
 } from '@chakra-ui/react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  flexRender,
+  createColumnHelper,
+  type RowSelectionState,
+  type SortingState,
+} from '@tanstack/react-table'
 
 const toaster = createToaster({
   placement: 'top-end',
@@ -32,6 +45,7 @@ interface Good {
   category: string
   rating: number
   sku?: string
+  thumbnail?: string
 }
 
 interface ProductsResponse {
@@ -62,6 +76,8 @@ export function GoodsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+  const [sorting, setSorting] = useState<SortingState>([])
   const navigate = useNavigate()
 
   const {
@@ -74,17 +90,25 @@ export function GoodsPage() {
   })
 
   // Загрузка данных с API
-  const fetchGoods = useCallback(async (query?: string) => {
+  const fetchGoods = useCallback(async (query?: string, sortField?: SortField, sortOrderVal?: SortOrder) => {
     setIsLoading(true)
     setError(null)
     try {
-      const url = query
+      let url = query
         ? `https://dummyjson.com/products/search?q=${encodeURIComponent(query)}`
         : 'https://dummyjson.com/products'
       
-      const response = await axios.get<ProductsResponse>(url, {
-        params: { limit: 100 }
-      })
+      const params: Record<string, string | number> = { limit: 100 }
+      
+      // Добавляем параметры сортировки для API
+      if (sortField && sortOrderVal) {
+        // Маппим поля на параметры API
+        const apiSortField = sortField === 'title' ? 'title' : sortField
+        params.sortBy = apiSortField
+        params.order = sortOrderVal
+      }
+      
+      const response = await axios.get<ProductsResponse>(url, { params })
       
       // Добавляем sku если его нет (для совместимости с формой)
       const productsWithSku = response.data.products.map((product) => ({
@@ -104,8 +128,22 @@ export function GoodsPage() {
 
   // Загрузка данных при монтировании
   useEffect(() => {
-    fetchGoods()
-  }, [fetchGoods])
+    fetchGoods(search, sortBy, sortOrder)
+  }, [fetchGoods, sortBy, sortOrder])
+
+  // Отслеживание изменений сортировки из react-table и запрос к API
+  useEffect(() => {
+    if (sorting.length > 0) {
+      const sort = sorting[0]
+      const field = sort.id as SortField
+      const order = sort.desc ? 'desc' : 'asc'
+      
+      // Обновляем состояние и загружаем данные с новой сортировкой
+      setSortBy(field)
+      setSortOrder(order)
+      fetchGoods(search, field, order)
+    }
+  }, [sorting])
 
   // Сохранение состояния сортировки в localStorage
   useEffect(() => {
@@ -124,8 +162,8 @@ export function GoodsPage() {
   // Обработчик поиска с задержкой
   const handleSearch = useCallback(() => {
     setSearch(searchInput)
-    fetchGoods(searchInput)
-  }, [searchInput, fetchGoods])
+    fetchGoods(searchInput, sortBy, sortOrder)
+  }, [searchInput, fetchGoods, sortBy, sortOrder])
 
   // Обработчик изменения поискового запроса с задержкой
   useEffect(() => {
@@ -138,29 +176,195 @@ export function GoodsPage() {
     return () => clearTimeout(timer)
   }, [searchInput, search, handleSearch])
 
-  const filteredAndSortedGoods = useMemo(() => {
-    let result = [...goods]
-    
-    result.sort((a, b) => {
-      let comparison = 0
-      
-      switch (sortBy) {
-        case 'title':
-          comparison = a.title.localeCompare(b.title)
-          break
-        case 'price':
-          comparison = a.price - b.price
-          break
-        case 'rating':
-          comparison = a.rating - b.rating
-          break
-      }
-      
-      return sortOrder === 'asc' ? comparison : -comparison
-    })
-    
-    return result
-  }, [goods, sortBy, sortOrder])
+  // Данные теперь приходят отсортированными с сервера
+  const filteredAndSortedGoods = goods
+
+  const columnHelper = createColumnHelper<Good>()
+
+  const columns = useMemo(() => [
+    columnHelper.display({
+      id: 'select',
+      header: () => (
+        <Checkbox.Root
+          checked={Object.keys(rowSelection).length === goods.length && goods.length > 0}
+          onCheckedChange={(details) => {
+            const newSelection: RowSelectionState = {}
+            if (details.checked) {
+              goods.forEach((good) => {
+                newSelection[good.id.toString()] = true
+              })
+            }
+            setRowSelection(newSelection)
+          }}
+        >
+          <Checkbox.HiddenInput />
+          <Checkbox.Control />
+        </Checkbox.Root>
+      ),
+      cell: ({ row }) => (
+        <Checkbox.Root
+          checked={!!rowSelection[row.original.id.toString()]}
+          onCheckedChange={(details) => {
+            setRowSelection((prev) => {
+              const newSelection = { ...prev }
+              if (details.checked) {
+                newSelection[row.original.id.toString()] = true
+              } else {
+                delete newSelection[row.original.id.toString()]
+              }
+              return newSelection
+            })
+          }}
+        >
+          <Checkbox.HiddenInput />
+          <Checkbox.Control />
+        </Checkbox.Root>
+      ),
+    }),
+    columnHelper.accessor('title', {
+      header: ({ column }) => (
+        <HStack
+          gap={1}
+          cursor="pointer"
+          onClick={() => column.toggleSorting()}
+        >
+          <Text fontWeight="600">Наименование</Text>
+          {column.getIsSorted() === 'asc' && <Text>↑</Text>}
+          {column.getIsSorted() === 'desc' && <Text>↓</Text>}
+        </HStack>
+      ),
+      cell: (info) => (
+        <HStack gap={3}>
+          <Image
+            src={info.row.original.thumbnail || `https://placehold.co/50x50?text=${info.getValue().charAt(0)}`}
+            alt={info.getValue()}
+            boxSize="40px"
+            objectFit="cover"
+            borderRadius="md"
+          />
+          <Text fontWeight="medium">{info.getValue()}</Text>
+        </HStack>
+      ),
+    }),
+    columnHelper.accessor('brand', {
+      header: ({ column }) => (
+        <HStack
+          gap={1}
+          cursor="pointer"
+          onClick={() => column.toggleSorting()}
+        >
+          <Text fontWeight="600">Вендор</Text>
+          {column.getIsSorted() === 'asc' && <Text>↑</Text>}
+          {column.getIsSorted() === 'desc' && <Text>↓</Text>}
+        </HStack>
+      ),
+      cell: (info) => <Badge colorPalette="gray">{info.getValue()}</Badge>,
+    }),
+    columnHelper.accessor('sku', {
+      header: ({ column }) => (
+        <HStack
+          gap={1}
+          cursor="pointer"
+          onClick={() => column.toggleSorting()}
+        >
+          <Text fontWeight="600">Артикул</Text>
+          {column.getIsSorted() === 'asc' && <Text>↑</Text>}
+          {column.getIsSorted() === 'desc' && <Text>↓</Text>}
+        </HStack>
+      ),
+      cell: (info) => <Text fontSize="sm" color="gray.600">{info.getValue()}</Text>,
+    }),
+    columnHelper.accessor('rating', {
+      header: ({ column }) => (
+        <HStack
+          gap={1}
+          cursor="pointer"
+          onClick={() => column.toggleSorting()}
+        >
+          <Text fontWeight="600">Оценка</Text>
+          {column.getIsSorted() === 'asc' && <Text>↑</Text>}
+          {column.getIsSorted() === 'desc' && <Text>↓</Text>}
+        </HStack>
+      ),
+      cell: (info) => (
+        <Text fontWeight="bold" color={info.getValue() < 3 ? 'red.500' : 'green.500'}>
+          {info.getValue().toFixed(1)}
+        </Text>
+      ),
+    }),
+    columnHelper.accessor('price', {
+      header: ({ column }) => (
+        <HStack
+          gap={1}
+          cursor="pointer"
+          onClick={() => column.toggleSorting()}
+        >
+          <Text fontWeight="600">Цена</Text>
+          {column.getIsSorted() === 'asc' && <Text>↑</Text>}
+          {column.getIsSorted() === 'desc' && <Text>↓</Text>}
+        </HStack>
+      ),
+      cell: (info) => (
+        <Text fontWeight="bold" color="blue.600">
+          {info.getValue().toLocaleString()} ₽
+        </Text>
+      ),
+    }),
+    columnHelper.display({
+      id: 'add',
+      header: () => null,
+      cell: () => (
+        <IconButton
+          aria-label="Добавить"
+          size="sm"
+          colorPalette="blue"
+          variant="ghost"
+          borderRadius="full"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2Z" />
+          </svg>
+        </IconButton>
+      ),
+    }),
+    columnHelper.display({
+      id: 'actions',
+      header: () => null,
+      cell: () => (
+        <Menu.Root>
+          <Menu.Trigger asChild>
+            <IconButton
+              aria-label="Действия"
+              size="sm"
+              variant="ghost"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM1.5 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm13 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />
+              </svg>
+            </IconButton>
+          </Menu.Trigger>
+          <Portal>
+            <Menu.Positioner>
+              <Menu.Content>
+                <Menu.Item value="edit">Редактировать</Menu.Item>
+                <Menu.Item value="delete" color="red">Удалить</Menu.Item>
+              </Menu.Content>
+            </Menu.Positioner>
+          </Portal>
+        </Menu.Root>
+      ),
+    }),
+  ], [columnHelper, goods, rowSelection])
+
+  const table = useReactTable({
+    data: filteredAndSortedGoods,
+    columns,
+    state: { rowSelection, sorting },
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  })
 
   const onSubmit = (data: GoodFormData) => {
     const newGood: Good = {
@@ -189,20 +393,6 @@ export function GoodsPage() {
     navigate('/')
   }
 
-  const toggleSort = (field: SortField) => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortBy(field)
-      setSortOrder('asc')
-    }
-  }
-
-  const getSortIndicator = (field: SortField) => {
-    if (sortBy !== field) return ''
-    return sortOrder === 'asc' ? ' ↑' : ' ↓'
-  }
-
   return (
     <Container maxW="container.xl" py={8}>
       <HStack justify="space-between" mb={6}>
@@ -219,27 +409,7 @@ export function GoodsPage() {
           onChange={(e) => setSearchInput(e.target.value)}
           maxW="400px"
         />
-        <Button 
-          variant={sortBy === 'title' ? 'solid' : 'outline'} 
-          colorPalette="blue"
-          onClick={() => toggleSort('title')}
-        >
-          По названию{getSortIndicator('title')}
-        </Button>
-        <Button 
-          variant={sortBy === 'price' ? 'solid' : 'outline'}
-          colorPalette="blue"
-          onClick={() => toggleSort('price')}
-        >
-          По цене{getSortIndicator('price')}
-        </Button>
-        <Button 
-          variant={sortBy === 'rating' ? 'solid' : 'outline'}
-          colorPalette="blue"
-          onClick={() => toggleSort('rating')}
-        >
-          По рейтингу{getSortIndicator('rating')}
-        </Button>
+        
         <Button colorPalette="green" onClick={() => setIsModalOpen(true)}>
           Добавить товар
         </Button>
@@ -296,51 +466,64 @@ export function GoodsPage() {
       {error && (
         <Box bg="red.50" p={4} borderRadius="md" mb={6}>
           <Text color="red.600">{error}</Text>
-          <Button mt={2} size="sm" onClick={() => fetchGoods(search)}>
+          <Button mt={2} size="sm" onClick={() => fetchGoods(search, sortBy, sortOrder)}>
             Повторить
           </Button>
         </Box>
       )}
 
       {!isLoading && !error && (
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={6}>
-          {filteredAndSortedGoods.map((good) => (
-            <Box
-              key={good.id}
-              bg="white"
-              p={6}
-              borderRadius="lg"
-              boxShadow="md"
-              _hover={{ boxShadow: 'lg' }}
-              borderWidth="2px"
-              borderColor={good.rating < 3 ? 'red.400' : 'transparent'}
-            >
-              <VStack align="stretch" gap={2}>
-                <Heading size="md">{good.title}</Heading>
-                <HStack gap={2}>
-                  <Badge colorPalette="purple">{good.category}</Badge>
-                  <Badge colorPalette="gray">{good.brand}</Badge>
-                </HStack>
-                <Text fontSize="xl" fontWeight="bold" color="blue.600">
-                  {good.price.toLocaleString()} ₽
-                </Text>
-                <HStack gap={2}>
-                  <Text fontSize="sm" color="gray.600">Рейтинг:</Text>
-                  <Text 
-                    fontSize="sm" 
-                    fontWeight="bold"
-                    color={good.rating < 3 ? 'red.500' : 'green.500'}
-                  >
-                    {good.rating.toFixed(1)}
-                  </Text>
-                </HStack>
-                {good.sku && (
-                  <Text fontSize="xs" color="gray.500">Артикул: {good.sku}</Text>
-                )}
-              </VStack>
-            </Box>
-          ))}
-        </SimpleGrid>
+        <Box overflowX="auto" bg="white" borderRadius="lg" boxShadow="md">
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      style={{
+                        padding: '12px 16px',
+                        textAlign: 'left',
+                        borderBottom: '2px solid #e2e8f0',
+                        backgroundColor: '#f7fafc',
+                        fontWeight: '600',
+                        color: '#4a5568',
+                      }}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => (
+                <tr
+                  key={row.id}
+                  style={{
+                    borderBottom: '1px solid #e2e8f0',
+                    transition: 'background-color 0.15s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f7fafc'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      style={{
+                        padding: '12px 16px',
+                      }}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Box>
       )}
 
       {!isLoading && !error && filteredAndSortedGoods.length === 0 && (
