@@ -48,9 +48,10 @@ export function GoodsForm({ editingGood, onSubmit, onCancel }: GoodsFormProps) {
           
           <Field.Root invalid={!!errors.price}>
             <Field.Label>Цена</Field.Label>
-            <Input 
-              type="number" 
-              {...register('price', { valueAsNumber: true })} 
+            <Input
+              type="number"
+              step="0.01"
+              {...register('price', { valueAsNumber: true })}
             />
             {errors.price && <Field.ErrorText>{errors.price.message}</Field.ErrorText>}
           </Field.Root>
