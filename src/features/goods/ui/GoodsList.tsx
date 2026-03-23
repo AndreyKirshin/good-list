@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import debounce from 'lodash.debounce'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
@@ -50,13 +51,20 @@ export function GoodsList() {
     setLocalGoods(apiGoods)
   }, [apiGoods])
 
+  const debouncedSearch = useMemo(
+    () => debounce((value: string) => setSearch(value), 300),
+    [setSearch]
+  )
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearch(searchInput)
-    }, 500)
-    
-    return () => clearTimeout(timer)
-  }, [searchInput, setSearch])
+    debouncedSearch(searchInput)
+  }, [searchInput, debouncedSearch])
+
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel()
+    }
+  }, [debouncedSearch])
 
   useEffect(() => {
     if (sorting.length > 0) {
