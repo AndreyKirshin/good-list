@@ -1,7 +1,5 @@
 import {
-  Box,
   Button,
-  Heading,
   Input,
   HStack,
   VStack,
@@ -34,12 +32,8 @@ export function GoodsForm({ editingGood, onSubmit, onCancel }: GoodsFormProps) {
   })
 
   return (
-    <Box bg="white" p={6} borderRadius="lg" boxShadow="md">
-      <Heading size="md" mb={4}>
-        {editingGood ? 'Редактировать товар' : 'Добавить новый товар'}
-      </Heading>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <VStack gap={4}>
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <VStack gap={4}>
           <Field.Root invalid={!!errors.title}>
             <Field.Label>Наименование</Field.Label>
             <Input {...register('title', { valueAsNumber: false })} />
@@ -78,6 +72,5 @@ export function GoodsForm({ editingGood, onSubmit, onCancel }: GoodsFormProps) {
           </HStack>
         </VStack>
       </form>
-    </Box>
   )
 }

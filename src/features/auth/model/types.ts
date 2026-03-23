@@ -1,4 +1,3 @@
-// Типы для ответа API
 export interface AuthResponse {
   id: number
   username: string
@@ -11,7 +10,6 @@ export interface AuthResponse {
   refreshToken: string
 }
 
-// Тип для сохранённой сессии
 export interface SessionData {
   accessToken: string
   user: {
@@ -24,11 +22,9 @@ export interface SessionData {
   isAuthenticated: boolean
 }
 
-// Тип для данных формы входа
 export interface AuthFormData {
   username: string
   password: string
 }
 
-// Ключ для хранения сессии
 export const SESSION_KEY = 'auth_session'

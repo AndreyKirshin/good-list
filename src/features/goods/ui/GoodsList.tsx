@@ -11,6 +11,7 @@ import {
   Text,
   Spinner,
   Flex,
+  Dialog,
 } from '@chakra-ui/react'
 import toast, { Toaster } from 'react-hot-toast'
 import { useGoods } from '../model/useGoods'
@@ -20,7 +21,7 @@ import { GoodsTable } from './GoodsTable'
 import { GoodsForm } from './GoodsForm'
 import { GoodsPagination } from './GoodsPagination'
 import type { RowSelectionState, SortingState } from '@tanstack/react-table'
-import { Search, Add } from '../../../shared/ui'
+import { Search, Add, RefreshIcon } from '../../../shared/ui'
 
 export function GoodsList() {
   const navigate = useNavigate()
@@ -45,12 +46,10 @@ export function GoodsList() {
     refetch,
   } = useGoods()
 
-  // Объединяем товары из API и локальные
   useEffect(() => {
     setLocalGoods(apiGoods)
   }, [apiGoods])
 
-  // Обработчик поиска с задержкой
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearch(searchInput)
@@ -59,7 +58,6 @@ export function GoodsList() {
     return () => clearTimeout(timer)
   }, [searchInput, setSearch])
 
-  // Обработчик сортировки из react-table
   useEffect(() => {
     if (sorting.length > 0) {
       const sort = sorting[0]
@@ -120,7 +118,7 @@ export function GoodsList() {
     <Flex maxW="container.xl" py={8} flexDirection={'column'} gap={'30px'} bg="#f9f9f9" >
 
       <Container px={'30px'} bg="white" borderRadius="10px" >
-        <HStack justify="space-between" mb={6} bg="white" py={'26px'} maxW="container.xl">
+        <HStack justify="space-between" bg="white" py={'26px'}>
           <Heading size="xl">Товары</Heading>
           <Box
             position="relative"
@@ -164,24 +162,45 @@ export function GoodsList() {
         <HStack mb={6} gap={4} justify="space-between" >
           <Heading size="xs">Все позиции</Heading>
           
+          <Flex gap={1}>
+          <Button size={'xs'} variant={'outline'} onClick={refetch}>
+            <RefreshIcon />
+          </Button>
           <Button 
             onClick={() => setIsModalOpen(true)}
             size={'xs'}
             colorPalette={'blue'}
           >
-            <Add /> Добавить товар
+            <Add /> Добавить
           </Button>
+          </Flex>
         </HStack>
 
-        {isModalOpen && (
-          <Box pb={'24px'}>
-            <GoodsForm
-              editingGood={editingGood}
-              onSubmit={handleSubmit}
-              onCancel={handleCancel}
-            />
-          </Box>
-        )}
+        <Dialog.Root
+          open={isModalOpen}
+          onOpenChange={(e) => {
+            if (!e.open) handleCancel()
+          }}
+          placement="center"
+        >
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content maxW="450px" p={6}>
+              <Dialog.Header p={0} mb={4}>
+                <Dialog.Title>
+                  {editingGood ? 'Редактировать товар' : 'Добавить новый товар'}
+                </Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body p={0}>
+                <GoodsForm
+                  editingGood={editingGood}
+                  onSubmit={handleSubmit}
+                  onCancel={handleCancel}
+                />
+              </Dialog.Body>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Dialog.Root>
 
         {isLoading && (
           <VStack py={12} gap={4}>

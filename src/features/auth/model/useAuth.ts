@@ -1,14 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createToaster } from '@chakra-ui/react'
 import axios from 'axios'
 import { authSchema, type AuthFormData } from './schemas'
 import { type SessionData } from './types'
 import { login, getStoredSession, saveSession, clearSession } from '../api/authApi'
-
-const toaster = createToaster({
-  placement: 'top-end',
-})
 
 interface UseAuthReturn {
   isLoading: boolean
@@ -35,18 +30,10 @@ export const useAuth = (): UseAuthReturn => {
     setError(null)
 
     try {
-      // Валидация через схему
       authSchema.parse(data)
 
       const sessionData = await login(data.username, data.password)
       saveSession(sessionData, rememberMe)
-
-      toaster.create({
-        title: 'Успешная авторизация',
-        description: `Добро пожаловать, ${sessionData.user.firstName}!`,
-        type: 'success',
-        duration: 3000,
-      })
 
       navigate('/goods')
     } catch (err) {
@@ -71,12 +58,6 @@ export const useAuth = (): UseAuthReturn => {
 
       setError(errorMessage)
       
-      toaster.create({
-        title: 'Ошибка авторизации',
-        description: errorMessage,
-        type: 'error',
-        duration: 3000,
-      })
     } finally {
       setIsLoading(false)
     }
@@ -96,7 +77,6 @@ export const useAuth = (): UseAuthReturn => {
   }
 }
 
-// Хук для проверки аутентификации в ProtectedRoute
 export const useAuthCheck = (): SessionData | null => {
   const [session, setSession] = useState<SessionData | null>(null)
 

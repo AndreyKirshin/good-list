@@ -9,6 +9,7 @@ import {
   Portal,
   Heading,
   Button,
+  Flex,
 } from '@chakra-ui/react'
 import {
   useReactTable,
@@ -78,7 +79,15 @@ export function GoodsTable({
           }}
         >
           <Checkbox.HiddenInput />
-          <Checkbox.Control />
+          <Checkbox.Control
+            bg={rowSelection[row.original.id.toString()] ? '#3C538E' : 'transparent'}
+            borderColor={rowSelection[row.original.id.toString()] ? '#3C538E' : 'gray.300'}
+            _checked={{
+              bg: '#3C538E',
+              borderColor: '#3C538E',
+              color: '#3C538E'
+            }}
+          />
         </Checkbox.Root>
       ),
     }),
@@ -171,56 +180,61 @@ export function GoodsTable({
           {column.getIsSorted() === 'desc' && <Text>↓</Text>}
         </HStack>
       ),
-      cell: (info) => (
-        <Text fontWeight="bold" color="blue.600">
-          {info.getValue().toLocaleString()} ₽
-        </Text>
-      ),
-    }),
-    columnHelper.display({
-      id: 'add',
-      header: () => null,
-      cell: () => (
-        <Button
-          variant={'ghost'}
-          size={'sm'}
-          background={'#242EDB'}
-          h='27px'
-          w='52px'
-          borderRadius={'23px'}
-        >
-          <PlusIcon width="16" height="16" color="white" />
-        </Button>
-      ),
+      cell: (info) => {
+        const price = info.getValue()
+        const [integerPart, decimalPart] = price.toLocaleString('ru-RU').split(',')
+        return (
+          <Text fontFamily="'Roboto Mono', monospace" fontSize="16px" lineHeight="110%" width={'200px'}>
+            <Text as="span" fontWeight="bold" color="black">
+              {integerPart}
+            </Text>
+            <Text as="span" fontWeight="bold" color="gray.400">
+              ,{decimalPart} ₽
+            </Text>
+          </Text>
+        )
+      },
     }),
     columnHelper.display({
       id: 'actions',
       header: () => null,
       cell: ({ row }) => (
-        <Menu.Root>
-          <Menu.Trigger asChild>
-            <Button
-              aria-label="Действия"
-              size='md'
-              variant="ghost"
-            >
-              <MenuIcon color="gray" />
-            </Button>
-          </Menu.Trigger>
-          <Portal>
-            <Menu.Positioner>
-              <Menu.Content>
-                <Menu.Item
-                  value="edit"
-                  onClick={() => onEdit(row.original)}
-                >
-                  Редактировать
-                </Menu.Item>
-                <Menu.Item value="delete" color="red">Удалить</Menu.Item>
-              </Menu.Content>
-            </Menu.Positioner>
-          </Portal>
-        </Menu.Root>
+        <Flex alignItems={'center'}>
+          <Button
+            variant={'ghost'}
+            size={'sm'}
+            background={'#242EDB'}
+            h='27px'
+            w='52px'
+            borderRadius={'23px'}
+          >
+            <PlusIcon width="16" height="16" color="white" />
+          </Button>
+          <Menu.Root>
+            <Menu.Trigger asChild>
+              <Button
+                aria-label="Действия"
+                size='md'
+                variant="ghost"
+              >
+                <MenuIcon color="#B2B3B9" />
+              </Button>
+            </Menu.Trigger>
+            <Portal>
+              <Menu.Positioner>
+                <Menu.Content>
+                  <Menu.Item
+                    value="edit"
+                    onClick={() => onEdit(row.original)}
+                  >
+                    Редактировать
+                  </Menu.Item>
+                  <Menu.Item value="delete" color="red">Удалить</Menu.Item>
+                </Menu.Content>
+              </Menu.Positioner>
+            </Portal>
+          </Menu.Root>
+        </Flex>
       ),
     }),
   ], [goods, rowSelection, onRowSelectionChange, onEdit])
@@ -261,15 +275,18 @@ export function GoodsTable({
           ))}
         </thead>
         <tbody>
-          {table.getRowModel().rows.map((row) => (
+          {table.getRowModel().rows.map((row) => {
+            const isSelected = !!rowSelection[row.original.id.toString()]
+            return (
             <tr
               key={row.id}
               style={{
                 borderBottom: '1px solid #e2e8f0',
-                transition: 'background-color 0.15s',
+                borderLeft: isSelected ? '3px solid #3C538E' : 'none',
+                transition: 'background-color 0.15s, border-color 0.15s',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f7fafc'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isSelected ? '#EEF2FF' : '#f7fafc'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isSelected ? '#EEF2FF' : 'transparent'}
             >
               {row.getVisibleCells().map((cell) => (
                 <td
@@ -282,7 +299,7 @@ export function GoodsTable({
                 </td>
               ))}
             </tr>
-          ))}
+          )})}
         </tbody>
       </table>
     </Box>
