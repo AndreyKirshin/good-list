@@ -60,7 +60,13 @@ export function GoodsTable({
           }}
         >
           <Checkbox.HiddenInput />
-          <Checkbox.Control />
+          <Checkbox.Control 
+            _checked={{
+              bg: '#3C538E',
+              borderColor: '#3C538E',
+              color: '#3C538E'
+            }}
+          />
         </Checkbox.Root>
       ),
       cell: ({ row }) => (
@@ -124,6 +130,7 @@ export function GoodsTable({
         <HStack
           gap={1}
           cursor="pointer"
+          justify={'space-around'}
           onClick={() => column.toggleSorting()}
         >
           <Text fontWeight="600">Вендор</Text>
@@ -131,13 +138,18 @@ export function GoodsTable({
           {column.getIsSorted() === 'desc' && <Text>↓</Text>}
         </HStack>
       ),
-      cell: (info) => <Heading size={'sm'} >{info.getValue()}</Heading>,
+      cell: (info) => (
+        <HStack justify={'space-around'}>
+          <Heading size={'sm'} >{info.getValue()}</Heading>
+        </HStack>
+      ),
     }),
     columnHelper.accessor('sku', {
       header: ({ column }) => (
         <HStack
           gap={1}
           cursor="pointer"
+          justify={'space-around'}
           onClick={() => column.toggleSorting()}
         >
           <Text fontWeight="600">Артикул</Text>
@@ -145,13 +157,18 @@ export function GoodsTable({
           {column.getIsSorted() === 'desc' && <Text>↓</Text>}
         </HStack>
       ),
-      cell: (info) => <Text fontSize="sm" color="gray.600">{info.getValue()}</Text>,
+      cell: (info) => (
+        <HStack justify={'space-around'}>
+          <Text fontSize="sm" color="gray.600">{info.getValue()}</Text>
+        </HStack>
+      ),
     }),
     columnHelper.accessor('rating', {
       header: ({ column }) => (
         <HStack
           gap={1}
           cursor="pointer"
+          justify={'space-around'}
           onClick={() => column.toggleSorting()}
         >
           <Text fontWeight="600">Оценка</Text>
@@ -160,12 +177,14 @@ export function GoodsTable({
         </HStack>
       ),
       cell: (info) => (
-        <>
-          <Text fontSize={'16px'} display={'inline'} color={info.getValue() < 3 ? '#F11010' : '#000000'}>
-            {info.getValue().toFixed(1)}
-          </Text>
-          <Text fontSize={'16px'} display={'inline'}>/5</Text>
-        </>
+        <HStack justify={'space-around'}>
+          <Box>
+            <Text fontSize={'16px'} display={'inline'} color={info.getValue() < 3 ? '#F11010' : '#000000'}>
+              {info.getValue().toFixed(1)}
+            </Text>
+            <Text fontSize={'16px'} display={'inline'}>/5</Text>
+          </Box>
+        </HStack>
       ),
     }),
     columnHelper.accessor('price', {
@@ -173,6 +192,7 @@ export function GoodsTable({
         <HStack
           gap={1}
           cursor="pointer"
+          justify={'space-around'}
           onClick={() => column.toggleSorting()}
         >
           <Text fontWeight="600">Цена</Text>
@@ -184,14 +204,16 @@ export function GoodsTable({
         const price = info.getValue()
         const [integerPart, decimalPart] = price.toLocaleString('ru-RU').split(',')
         return (
-          <Text fontFamily="'Roboto Mono', monospace" fontSize="16px" lineHeight="110%" width={'200px'}>
-            <Text as="span" fontWeight="bold" color="black">
-              {integerPart}
+          <HStack justify={'space-around'}>
+            <Text fontFamily="'Roboto Mono', monospace" fontSize="16px" lineHeight="110%" >
+              <Text as="span" fontWeight="bold" color="black">
+                {integerPart}
+              </Text>
+              <Text as="span" fontWeight="bold" color="gray.400">
+                ,{decimalPart} ₽
+              </Text>
             </Text>
-            <Text as="span" fontWeight="bold" color="gray.400">
-              ,{decimalPart} ₽
-            </Text>
-          </Text>
+          </HStack>
         )
       },
     }),
@@ -199,7 +221,7 @@ export function GoodsTable({
       id: 'actions',
       header: () => null,
       cell: ({ row }) => (
-        <Flex alignItems={'center'}>
+        <Flex alignItems={'center'} justify={'end'}>
           <Button
             variant={'ghost'}
             size={'sm'}

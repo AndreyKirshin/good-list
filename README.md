@@ -1,73 +1,116 @@
-# React + TypeScript + Vite
+# Good List — Приложение для управления товарами
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Веб-приложение для управления списком товаров с системой аутентификации пользователей. Позволяет просматривать, добавлять, редактировать и удалять товары с пагинацией и поиском.
 
-Currently, two official plugins are available:
+## Функциональность
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Аутентификация**: Вход в систему с использованием username/password
+- **Управление товарами**: Полный CRUD-функционал (создание, чтение, обновление, удаление)
+- **Пагинация**: Постраничный вывод товаров
+- **Табличное отображение**: Удобная таблица с данными товаров
+- **Валидация форм**: Проверка вводимых данных на стороне клиента
+- **Защищённые маршруты**: Доступ к списку товаров только для авторизованных пользователей
+- **Уведомления**: Всплывающие уведомления о действиях пользователя
 
-## React Compiler
+## Отступление от макета
+- добавлена кнопка "Выйти" для тестирования логина
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Использованные технологии
 
-## Expanding the ESLint configuration
+### Основные
+- **React 19** — библиотека для создания пользовательских интерфейсов
+- **TypeScript** 
+- **Vite** — инструмент для сборки и разработки
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### UI и стилизация
+- **Chakra UI v3** — компонентная библиотека для React
+- **Framer Motion** — библиотека для анимаций
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Управление данными и состоянием
+- **React Router DOM v7** — маршрутизация
+- **Axios** — HTTP-клиент для запросов к API
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Формы и валидация
+- **React Hook Form** — управление формами
+- **Zod** — схемы валидации данных
+- **@hookform/resolvers** — интеграция Zod с React Hook Form
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Дополнительные библиотеки
+- **@tanstack/react-table** — таблицы с расширенными возможностями
+- **react-hot-toast** — уведомления
+
+### Инструменты разработки
+- **ESLint** — линтинг кода
+- **TypeScript ESLint** — TypeScript-специфичные правила линтинга
+
+## Список промптов
+
+Для создания этого проекта были использованы следующие промпты:
+
+1. в текущей папке реализуй приложение по требованиям:
+  - приложение, которое загрузит список товаров и позволит пользователю удобно взаимодействовать с данными: сортировать, редактировать и добавлять новые позиции. 
+  - библиотеки: react 18+ версии, TypeScript (строгая типизация обязательна), chackra ui, React Router, axios, tanstak/react-table
+  - Примени архитектуру FSD
+  - сделай две страницы auth и goods
+  - [описание из тестового задания]
+
+2. Исправь ошибку: При заходе на страницу происходит мелькание
+
+3. Нужно добавить toast уведомления при добавлении и редактировании товара в приложении. 
+
+4. Выделить из компонента GoodsPage фичу Goods и поместить её в папку features/goods
+
+5. Выделить из компонента AuthPage фичу Auth и поместить её в папку features/auth
+
+6. в форме товара в поле Цена дробные числа не проходят валидацию. Исправь
+
+7. стилизуй заголовок таблицы GoodsList согласно макету: [стили для формы авторизации из Фигмы]
+
+8. реализуй открытие формы в GoodsList через Dialog, Portal, createOverlay chackra ui
+
+9. параметры сортировки и номер страницы должны сограняться в url. При смене сортировки номер страницы сбрасывается
+
+10. в файле readme
+  - сделай краткое описание проекта
+  - использованные технологии
+  - список промптов, использованных для создания этого проекта
+
+
+## Структура проекта
+
+```
+src/
+├── app/              # Конфигурация приложения
+│   ├── providers/   # Провайдеры (Chakra UI)
+│   └── routes/      # Маршрутизация
+├── features/        # Бизнес-логика
+│   ├── auth/        # Аутентификация
+│   └── goods/       # Управление товарами
+├── pages/           # Страницы
+│   ├── auth/        # Страница входа
+│   └── goods/       # Страница товаров
+├── shared/          # Общие компоненты и утилиты
+└── entities/        # Сущности
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Запуск проекта
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# Установка зависимостей
+npm install
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Запуск в режиме разработки
+npm run dev
+
+# Сборка проекта
+npm run build
+
+# Запуск линтера
+npm run lint
 ```
+
+## API
+
+Проект использует [DummyJSON API](https://dummyjson.com/) для:
+- Аутентификации: `https://dummyjson.com/auth/login`
+- Товаров: `https://dummyjson.com/products`

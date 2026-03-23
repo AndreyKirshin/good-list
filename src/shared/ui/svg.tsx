@@ -49,8 +49,8 @@ export const LogoIcon = (props: React.SVGProps<SVGSVGElement>) => (
         <path d="M45.844 43.98C46.7178 43.98 47.426 36.8255 47.426 28C47.426 19.1745 46.7178 12.02 45.844 12.02C44.9703 12.02 44.262 19.1745 44.262 28C44.262 36.8255 44.9703 43.98 45.844 43.98Z" fill="black"/>
         </g>
         <defs>
-        <filter id="filter0_dd_1046_53" x="0" y="0" width="68" height="74" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-        <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+        <filter id="filter0_dd_1046_53" x="0" y="0" width="68" height="74" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+        <feFlood floodOpacity="0" result="BackgroundImageFix"/>
         <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
         <feOffset dy="12"/>
         <feGaussianBlur stdDeviation="4"/>
@@ -66,12 +66,12 @@ export const LogoIcon = (props: React.SVGProps<SVGSVGElement>) => (
         <feBlend mode="normal" in="SourceGraphic" in2="effect2_dropShadow_1046_53" result="shape"/>
         </filter>
         <linearGradient id="paint0_linear_1046_53" x1="34" y1="54" x2="34" y2="2" gradientUnits="userSpaceOnUse">
-        <stop offset="0.5" stop-color="#232323" stop-opacity="0"/>
-        <stop offset="1" stop-color="#232323" stop-opacity="0.06"/>
+        <stop offset="0.5" stopColor="#232323" stopOpacity="0"/>
+        <stop offset="1" stopColor="#232323" stopOpacity="0.06"/>
         </linearGradient>
         <linearGradient id="paint1_linear_1046_53" x1="34" y1="2" x2="34" y2="54" gradientUnits="userSpaceOnUse">
-        <stop stop-color="#EDEDED" stop-opacity="0.7"/>
-        <stop offset="0.7" stop-color="#EDEDED" stop-opacity="0"/>
+        <stop stopColor="#EDEDED" stopOpacity="0.7"/>
+        <stop offset="0.7" stopColor="#EDEDED" stopOpacity="0"/>
         </linearGradient>
         </defs>
     </svg>
@@ -135,8 +135,8 @@ export const PlusIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export const CloseIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg width="17" height="18" viewBox="0 0 17 18" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-        <path d="M1.01031 1.00002L15.0103 17" stroke="#C9C9C9" stroke-width="2" stroke-linecap="round"/>
-        <path d="M15 1.00002L1 17" stroke="#C9C9C9" stroke-width="2" stroke-linecap="round"/>
+        <path d="M1.01031 1.00002L15.0103 17" stroke="#C9C9C9" strokeWidth="2" strokeLinecap="round"/>
+        <path d="M15 1.00002L1 17" stroke="#C9C9C9" strokeWidth="2" strokeLinecap="round"/>
     </svg>
 
 )
