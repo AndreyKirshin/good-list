@@ -23,12 +23,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     checkAuth()
   }, [])
 
-  // Пока проверяем аутентификацию - не рендерим ничего
   if (isAuthenticated === null) {
     return null
   }
 
-  // Если не аутентифицирован - редирект на страницу авторизации
   if (!isAuthenticated) {
     return <Navigate to="/" replace />
   }

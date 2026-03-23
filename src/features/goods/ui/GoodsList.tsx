@@ -9,7 +9,7 @@ import {
   HStack,
   VStack,
   Text,
-  Spinner,
+  Progress,
   Flex,
   Dialog,
 } from '@chakra-ui/react'
@@ -203,8 +203,12 @@ export function GoodsList() {
         </Dialog.Root>
 
         {isLoading && (
-          <VStack py={12} gap={4}>
-            <Spinner size="xl" color="blue.500" />
+          <VStack py={12} gap={4} w="100%">
+            <Progress.Root w="100%" size="lg" value={null} colorPalette="blue" borderRadius="md">
+              <Progress.Track w="100%">
+                <Progress.Range />
+              </Progress.Track>
+            </Progress.Root>
             <Text color="gray.500">Загрузка товаров...</Text>
           </VStack>
         )}
