@@ -9,6 +9,8 @@ import {
   Checkbox,
   Menu,
   Portal,
+  Heading,
+  Button,
 } from '@chakra-ui/react'
 import {
   useReactTable,
@@ -21,6 +23,7 @@ import {
   type OnChangeFn,
 } from '@tanstack/react-table'
 import type { Good } from '../model/types'
+import { MenuIcon } from '../../../shared/ui'
 
 interface GoodsTableProps {
   goods: Good[]
@@ -102,7 +105,10 @@ export function GoodsTable({
             objectFit="cover"
             borderRadius="md"
           />
-          <Text fontWeight="medium">{info.getValue()}</Text>
+          <Box>
+            <Heading size={'sm'} >{info.getValue()}</Heading>
+            <Text textStyle={'xs'} color={'#B2B3B9'}>{info.row.original.category ?? ''}</Text>
+          </Box>
         </HStack>
       ),
     }),
@@ -118,7 +124,7 @@ export function GoodsTable({
           {column.getIsSorted() === 'desc' && <Text>↓</Text>}
         </HStack>
       ),
-      cell: (info) => <Badge colorPalette="gray">{info.getValue()}</Badge>,
+      cell: (info) => <Heading size={'sm'} >{info.getValue()}</Heading>,
     }),
     columnHelper.accessor('sku', {
       header: ({ column }) => (
@@ -147,9 +153,12 @@ export function GoodsTable({
         </HStack>
       ),
       cell: (info) => (
-        <Text fontWeight="bold" color={info.getValue() < 3 ? 'red.500' : 'green.500'}>
-          {info.getValue().toFixed(1)}
-        </Text>
+        <>
+          <Text fontSize={'16px'} display={'inline'} color={info.getValue() < 3 ? '#F11010' : '#000000'}>
+            {info.getValue().toFixed(1)}
+          </Text>
+          <Text fontSize={'16px'} display={'inline'}>/5</Text>
+        </>
       ),
     }),
     columnHelper.accessor('price', {
@@ -174,17 +183,19 @@ export function GoodsTable({
       id: 'add',
       header: () => null,
       cell: () => (
-        <IconButton
-          aria-label="Добавить"
-          size="sm"
-          colorPalette="blue"
-          variant="ghost"
-          borderRadius="full"
+        <Button
+          variant={'ghost'}
+          size={'sm'}
+          background={'#242EDB'}
+          h='27px'
+          w='52px'
+          borderRadius={'23px'}
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="white">
             <path d="M8 2a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 8 2Z" />
           </svg>
-        </IconButton>
+
+        </Button>
       ),
     }),
     columnHelper.display({
@@ -193,15 +204,13 @@ export function GoodsTable({
       cell: ({ row }) => (
         <Menu.Root>
           <Menu.Trigger asChild>
-            <IconButton
+            <Button
               aria-label="Действия"
-              size="sm"
+              size='md'
               variant="ghost"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM1.5 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm13 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />
-              </svg>
-            </IconButton>
+              <MenuIcon />
+            </Button>
           </Menu.Trigger>
           <Portal>
             <Menu.Positioner>
@@ -232,7 +241,7 @@ export function GoodsTable({
   })
 
   return (
-    <Box overflowX="auto" bg="white" borderRadius="lg" boxShadow="md">
+    <Box overflowX="auto" bg="white" borderRadius="lg" >
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -241,17 +250,16 @@ export function GoodsTable({
                 <th
                   key={header.id}
                   style={{
-                    padding: '12px 16px',
                     textAlign: 'left',
-                    borderBottom: '2px solid #e2e8f0',
-                    backgroundColor: '#f7fafc',
-                    fontWeight: '600',
-                    color: '#4a5568',
+                    borderBottom: '1px solid #e2e8f0',
+           
                   }}
                 >
-                  {header.isPlaceholder
+                  <Heading size={'sm'} px={'16px'} py={'31px'} color={'#B2B3B9'}>
+                    {header.isPlaceholder
                     ? null
                     : flexRender(header.column.columnDef.header, header.getContext())}
+                  </Heading>
                 </th>
               ))}
             </tr>

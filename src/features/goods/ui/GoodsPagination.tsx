@@ -46,7 +46,7 @@ export function GoodsPagination({ page, totalPages, onPageChange }: GoodsPaginat
       <IconButton
         aria-label="Предыдущая страница"
         size="sm"
-        variant="outline"
+        variant="ghost"
         onClick={() => onPageChange(page - 1)}
         disabled={page === 0}
       >
@@ -59,7 +59,7 @@ export function GoodsPagination({ page, totalPages, onPageChange }: GoodsPaginat
         typeof pageNum === 'number' ? (
           <Button
             key={idx}
-            size="sm"
+            size="xs"
             variant={pageNum === page ? 'solid' : 'outline'}
             colorPalette={pageNum === page ? 'blue' : 'gray'}
             onClick={() => onPageChange(pageNum)}
@@ -74,7 +74,7 @@ export function GoodsPagination({ page, totalPages, onPageChange }: GoodsPaginat
       <IconButton
         aria-label="Следующая страница"
         size="sm"
-        variant="outline"
+        variant="ghost"
         onClick={() => onPageChange(page + 1)}
         disabled={page >= totalPages - 1}
       >
