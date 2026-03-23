@@ -108,7 +108,7 @@ export function GoodsTable({
           <Image
             src={info.row.original.thumbnail || `https://placehold.co/50x50?text=${info.getValue().charAt(0)}`}
             alt={info.getValue()}
-            boxSize="40px"
+            boxSize={10}
             objectFit="cover"
             borderRadius="md"
           />
@@ -264,7 +264,7 @@ export function GoodsTable({
            
                   }}
                 >
-                  <Heading size={'sm'} px={'16px'} py={'31px'} color={'#B2B3B9'}>
+                  <Heading size={'sm'} px={4} py={8} color={'#B2B3B9'}>
                     {header.isPlaceholder
                     ? null
                     : flexRender(header.column.columnDef.header, header.getContext())}

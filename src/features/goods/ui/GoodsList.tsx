@@ -115,10 +115,10 @@ export function GoodsList() {
   }
 
   return (
-    <Flex maxW="container.xl" py={8} flexDirection={'column'} gap={'30px'} bg="#f9f9f9" >
+    <Flex maxW="container.xl" py={8} flexDirection={'column'} gap={8} bg="#f9f9f9" >
 
-      <Container px={'30px'} bg="white" borderRadius="10px" >
-        <HStack justify="space-between" bg="white" py={'26px'}>
+      <Container bg="white" borderRadius="10px" >
+        <HStack justify="space-between" bg="white" py={7}>
           <Heading size="xl">Товары</Heading>
           <Box
             position="relative"
@@ -142,7 +142,7 @@ export function GoodsList() {
             borderColor="#ededed"
             borderRadius="10px"
             background={'#F3F3F3'}
-            paddingLeft={'48px'}
+            paddingLeft={12}
             paddingInline={'none'}
             
           />
@@ -158,9 +158,9 @@ export function GoodsList() {
         </HStack>
       </Container>
 
-      <Container px={'30px'} bg="white" py={'26px'} borderRadius="10px">
-        <HStack mb={6} gap={4} justify="space-between" >
-          <Heading size="xs">Все позиции</Heading>
+      <Container px={8} bg="white" py={7} borderRadius="10px">
+        <HStack gap={4} pb={10} justify="space-between" >
+          <Heading size="sm">Все позиции</Heading>
           
           <Flex gap={1}>
           <Button size={'xs'} variant={'outline'} onClick={refetch}>
