@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Box, Button, Field, Input, VStack, Checkbox, Text, Flex } from '@chakra-ui/react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { authSchema, type AuthFormData } from '../model/schemas'
 import { useAuth } from '../model/useAuth'
@@ -15,13 +15,16 @@ export function AuthForm() {
     register,
     handleSubmit,
     formState: { errors },
-    watch, 
-    setValue
+    setValue,
+    control
   } = useForm<AuthFormData>({
     resolver: zodResolver(authSchema),
   })
 
-  const username = watch('username');
+  const username = useWatch({
+    control,
+    name: 'username'
+  });
 
   const resetUsername = () => setValue('username', '');
 

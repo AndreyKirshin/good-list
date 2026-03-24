@@ -10,7 +10,7 @@ export const fetchGoods = async (
 ): Promise<{ goods: Good[]; total: number }> => {
   const skip = pageNum * limitVal
   
-  let url = query
+  const url = query
     ? `https://dummyjson.com/products/search?q=${encodeURIComponent(query)}`
     : 'https://dummyjson.com/products'
   

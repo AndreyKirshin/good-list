@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { authSchema, type AuthFormData } from './schemas'
@@ -78,12 +78,7 @@ export const useAuth = (): UseAuthReturn => {
 }
 
 export const useAuthCheck = (): SessionData | null => {
-  const [session, setSession] = useState<SessionData | null>(null)
-
-  useEffect(() => {
-    const storedSession = getStoredSession()
-    setSession(storedSession)
-  }, [])
+  const [session] = useState<SessionData | null>(() => getStoredSession())
 
   return session
 }
