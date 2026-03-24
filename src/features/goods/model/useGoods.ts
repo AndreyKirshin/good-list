@@ -28,6 +28,7 @@ interface UseGoodsReturn {
   setSortOrder: (sortOrder: SortOrder | undefined) => void
   setSearch: (search: string) => void
   refetch: () => void
+  refetchResetParams: () => void
 }
 
 export function useGoods(options: UseGoodsOptions = {}): UseGoodsReturn {
@@ -150,6 +151,14 @@ export function useGoods(options: UseGoodsOptions = {}): UseGoodsReturn {
     loadGoods()
   }, [loadGoods])
 
+  const refetchResetParams = useCallback(() => {
+    setSearch('')
+    setSortBy(initialSortBy)
+    setSortOrder(initialSortOrder)
+    setPage(initialPage)
+    loadGoods()
+  }, [initialSortBy, initialSortOrder, initialPage, loadGoods])
+
   return {
     goods,
     isLoading,
@@ -164,6 +173,7 @@ export function useGoods(options: UseGoodsOptions = {}): UseGoodsReturn {
     setSortBy: handleSetSortBy,
     setSortOrder: handleSetSortOrder,
     setSearch,
-    refetch
+    refetch,
+    refetchResetParams
   }
 }

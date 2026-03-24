@@ -31,7 +31,6 @@ export function GoodsList() {
   const [editingGood, setEditingGood] = useState<Good | null>(null)
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [sorting, setSorting] = useState<SortingState>([])
-  const [localGoods, setLocalGoods] = useState<Good[]>([])
 
   const {
     goods: apiGoods,
@@ -45,11 +44,8 @@ export function GoodsList() {
     setSortOrder,
     setSearch,
     refetch,
+    refetchResetParams,
   } = useGoods()
-
-  useEffect(() => {
-    setLocalGoods(apiGoods)
-  }, [apiGoods])
 
   const debouncedSearch = useMemo(
     () => debounce((value: string) => setSearch(value), 300),
@@ -91,20 +87,9 @@ export function GoodsList() {
 
   const handleSubmit = (data: GoodFormData) => {
     if (editingGood) {
-      const updatedGoods = localGoods.map((good) =>
-        good.id === editingGood.id ? { ...good, ...data } : good
-      )
-      setLocalGoods(updatedGoods)
       toast.success(`Товар "${data.title}" обновлён - ${data.price} ₽`)
       setEditingGood(null)
     } else {
-      const newGood: Good = {
-        id: Date.now(),
-        ...data,
-        category: 'Custom',
-        rating: 5,
-      }
-      setLocalGoods([...localGoods, newGood])
       toast.success(`Товар "${data.title}" добавлен - ${data.price} ₽`)
     }
     
@@ -171,7 +156,7 @@ export function GoodsList() {
           <Heading size="sm">Все позиции</Heading>
           
           <Flex gap={1}>
-          <Button size={'xs'} variant={'outline'} onClick={refetch}>
+          <Button size={'xs'} variant={'outline'} onClick={refetchResetParams}>
             <RefreshIcon />
           </Button>
           <Button 
@@ -233,7 +218,7 @@ export function GoodsList() {
         {!isLoading && !error && (
           <>
             <GoodsTable
-              goods={localGoods}
+              goods={apiGoods}
               rowSelection={rowSelection}
               sorting={sorting}
               onRowSelectionChange={setRowSelection}
@@ -241,7 +226,7 @@ export function GoodsList() {
               onEdit={handleEdit}
             />
 
-            {localGoods.length === 0 && (
+            {apiGoods.length === 0 && (
               <Text textAlign="center" color="gray.500" mt={8}>
                 Товары не найдены
               </Text>
@@ -250,7 +235,7 @@ export function GoodsList() {
             <Flex justify={'space-between'} alignItems={'center'}>
               {total > 0 && (
                 <Box textAlign="center" color="gray.500" mt={4} fontSize="sm" display={'inline'}>
-                  Показано <Text display={'inline'} color={'black'}>{localGoods.length} </Text> из <Text display={'inline'} color={'black'}>{total}</Text>
+                  Показано <Text display={'inline'} color={'black'}>{apiGoods.length} </Text> из <Text display={'inline'} color={'black'}>{total}</Text>
                 </Box>
               )}
               <GoodsPagination
